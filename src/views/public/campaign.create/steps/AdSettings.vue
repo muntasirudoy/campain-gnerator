@@ -207,6 +207,9 @@ const isDragOver = ref(false);
 onMounted(() => {
   if (props.values.audiences?.length) {
     replace([...props.values.audiences]); // ✅ Deep copy to avoid reactive proxy issues
+  } else {
+    // Ensure at least one audience entry is present
+    push({ gender: '', age_group: 1 });
   }
 
   if (props.values.video_url) {
@@ -265,7 +268,7 @@ const removeVideo = () => {
 };
 
 // ✅ Add Audience
-const addAudience = () => push({ gender: "", age_group: "" });
+const addAudience = () => push({ gender: '', age_group: 1 });
 </script>
 
 <style scoped>
