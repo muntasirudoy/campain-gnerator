@@ -182,7 +182,10 @@ async function loadInitialData() {
   if (data.ad) {
     const adData = {
       name: data.ad.name || '',
-      audiences: data.ad.audiences || [{ gender: '', age_group: 1 }],
+      audiences:
+        Array.isArray(data.ad.audiences) && data.ad.audiences.length > 0
+          ? data.ad.audiences
+          : [{ gender: '', age_group: 1 }],
       video_url: data.ad.video_url || '',
     };
     
