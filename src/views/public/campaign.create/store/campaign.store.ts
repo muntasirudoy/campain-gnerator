@@ -83,8 +83,6 @@ export const useOnboardingStore: StoreDefinition<
       section: T,
       data: Partial<OnboardingState[T]>
     ) {
-      console.log(section,data);
-      
       if (!this[section]) return;
       Object.assign(this[section], data);
     },

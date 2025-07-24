@@ -58,7 +58,7 @@
                 type="button"
                 variant="outline"
                 @click="prevStep"
-                :disabled="currentStep === 2 || isLoading"
+                :disabled="currentStep === 1 || isLoading"
               >
                 Back
               </Button>
@@ -75,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from "vue";
+import { onMounted, ref } from "vue";
 import { Form, useForm } from "vee-validate";
 import * as yup from "yup";
 import { Button } from "@/components/ui/button";
@@ -275,17 +275,16 @@ async function callApiService(step: number, values: any, actionType: 'create' | 
 
     case 2:
       if (actionType === 'create') {
-        console.log(values);
-        
-        await campaignService.create({
+        const { data } = await campaignService.create({
           ...values,
           start_time: formatToYMDHIS(values.start_time),
           end_time: formatToYMDHIS(values.end_time),
         });
+        // store returned campaign id for later steps
+        store.updateSection('goalCampaign', { id: data.id });
+        values.id = data.id;
       } else {
-        let id = values.id
-          console.log(values);
-        await campaignService.updateCampaign(id,{
+        await campaignService.updateCampaign(values.id, {
           ...values,
           start_time: formatToYMDHIS(values.start_time),
           end_time: formatToYMDHIS(values.end_time),
@@ -295,8 +294,6 @@ async function callApiService(step: number, values: any, actionType: 'create' | 
 
     case 3:
       if (actionType === 'create') {
-        console.log(values);
-
         await adService.create({ ...values, campaign_id: store.goalCampaign.id });
       } else {
         // await adService.update({ ...values, campaign_id: store.goalCampaign.id });
@@ -305,10 +302,7 @@ async function callApiService(step: number, values: any, actionType: 'create' | 
 
     case 4:
       if (actionType === 'create') {
-         console.log(values);
-         
-    await clientBillingService.createBilling(values); 
-  
+        await clientBillingService.createBilling(values);
       } else {
         // await paymentService.update(values);
       }
@@ -318,7 +312,6 @@ async function callApiService(step: number, values: any, actionType: 'create' | 
 
 function getApiActionType(section: StepKey, values: any): 'create' | 'update' | 'skip' {
   const original = originalData.value[section];
-  console.log(Object.keys(original).length);
 
   if (!original || Object.keys(original).length === 0 || original.id == null) {
     return 'create'; // No API data previously

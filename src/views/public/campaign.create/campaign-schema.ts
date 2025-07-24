@@ -56,7 +56,6 @@ async function handleNext() {
       currentStep.value++;
     } else {
       alert("Onboarding Completed!");
-      console.log("Final Data:", store.getFullData());
     }
   } catch (err) {
     alert(err.message || "Something went wrong");
