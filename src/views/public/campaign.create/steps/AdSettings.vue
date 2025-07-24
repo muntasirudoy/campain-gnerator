@@ -205,17 +205,20 @@ const isUploading = ref(false);
 const isDragOver = ref(false);
 
 onMounted(() => {
-  if (props.values.audiences?.length) {
-    replace([...props.values.audiences]); // ✅ Deep copy to avoid reactive proxy issues
+  if (Array.isArray(props.values.audiences) && props.values.audiences.length) {
+    replace([...props.values.audiences]);
   } else {
-    // Ensure at least one audience entry is present
-    push({ gender: '', age_group: 1 });
-  }
-
-  if (props.values.video_url) {
-    videoFileUrl.value = props.values.video_url;
+    replace([{ gender: '', age_group: 1 }]);
   }
 });
+
+watch(
+  () => props.values.video_url,
+  (val) => {
+    videoFileUrl.value = val || "";
+  },
+  { immediate: true }
+);
 // ✅ Video Upload
 const triggerFileUpload = () => fileInput.value?.click();
 const handleFileSelect = async (e: Event) => {
