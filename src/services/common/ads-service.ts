@@ -3,7 +3,7 @@ import { apiService } from "../api-service";
 import type { ApiResponse } from "@/types/common";
 
 export const adService = {
-  async create(payload: FormData): Promise<ApiResponse<Ad>> {
+  async create(payload: any): Promise<ApiResponse<Ad>> {
     return await apiService.post<Ad>("/clients/ads/store", payload);
   },
 
