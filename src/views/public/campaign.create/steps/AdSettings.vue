@@ -186,7 +186,7 @@ import { Button } from "@/components/ui/button";
 import { PlusIcon, XIcon } from "lucide-vue-next";
 import { AdConstant } from "@/constant/ads";
 import { adService } from "@/services/common/ads-service";
-import { ref, watch, onMounted } from "vue";
+import { ref, watch } from "vue";
 import { useFieldArray } from "vee-validate";
 import { useFormContext } from "vee-validate";
 
@@ -204,15 +204,25 @@ const uploadProgress = ref(0);
 const isUploading = ref(false);
 const isDragOver = ref(false);
 
-onMounted(() => {
-  if (props.values.audiences?.length) {
-    replace([...props.values.audiences]); // ✅ Deep copy to avoid reactive proxy issues
-  }
+watch(
+  () => props.values.audiences,
+  (val) => {
+    if (Array.isArray(val) && val.length > 0) {
+      replace([...val]);
+    } else {
+      replace([{ gender: '', age_group: 1 }]);
+    }
+  },
+  { immediate: true, deep: true }
+);
 
-  if (props.values.video_url) {
-    videoFileUrl.value = props.values.video_url;
-  }
-});
+watch(
+  () => props.values.video_url,
+  (val) => {
+    videoFileUrl.value = val || '';
+  },
+  { immediate: true }
+);
 // ✅ Video Upload
 const triggerFileUpload = () => fileInput.value?.click();
 const handleFileSelect = async (e: Event) => {
@@ -265,7 +275,7 @@ const removeVideo = () => {
 };
 
 // ✅ Add Audience
-const addAudience = () => push({ gender: "", age_group: "" });
+const addAudience = () => push({ gender: '', age_group: 1 });
 </script>
 
 <style scoped>
