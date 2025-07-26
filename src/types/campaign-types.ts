@@ -1,7 +1,6 @@
 import { Ad } from "./ad-types";
 import { PaymentSettings } from "./client-billing-type";
 
-
 export type Campaign = {
   id: number;
   name: string;
@@ -24,7 +23,7 @@ export type Campaign = {
     label: string;
   };
   budget: string;
-  start_time: string;  // e.g., ISO datetime string
+  start_time: string; // e.g., ISO datetime string
   end_time: string;
   location: {
     value: number;
@@ -38,44 +37,41 @@ export type Campaign = {
 };
 
 export interface CampaignCreate {
-  businessName: string,
-  businessRegister: string,
+  businessName: string;
+  businessRegister: string;
 
-  selectedGoal: number,
-  selectedVideo: string,
-  campaignName: '',
+  selectedGoal: number;
+  selectedVideo: string;
+  campaignName: "";
   dailyBudget: {
-    frequency: 'string',
-    startDate: string,
-    endDate: string,
-    amount:string
-  },
+    frequency: "string";
+    startDate: string;
+    endDate: string;
+    amount: string;
+  };
   campaignAudience: {
-    gender: string,
-    age: number
-  },
-  campaignLocation: string,
-  paymentMethod: string,
-  cardNumber: number,
-  billingAddress: string
+    gender: string;
+    age: number;
+  };
+  campaignLocation: string;
+  paymentMethod: string;
+  cardNumber: number;
+  billingAddress: string;
 }
-
 
 export interface CampaignPayload {
-  name: string
-  goal_id: number
-  out_url: string
-  type: string
-  format_ads: number
-  bid_strategy: number
-  budget_type: number
-  budget: string
-  start_time: string
-  end_time: string
-  location: number
+  name: string;
+  goal_id: number;
+  out_url: string;
+  type: string;
+  format_ads: number;
+  bid_strategy: number;
+  budget_type: number;
+  budget: string;
+  start_time: string;
+  end_time: string;
+  location: number;
 }
-
-
 
 export interface InitialResponse {
   id: number;
@@ -89,8 +85,22 @@ export interface InitialResponse {
   is_stepper_complete: number;
   client: Client;
   campaign: Campaign;
-  ad: Ad; 
-  paymentSetting: Pick<PaymentSettings,'billing_country' | 'time_zone' | 'currency' >;
+  ad: Ad;
+  paymentSetting: {
+    billing_country: {
+      value: number;
+      label: string;
+    };
+    currency: {
+      value: number;
+      label: string;
+    };
+    time_zone: {
+      value: string;
+      label: string;
+    };
+  };
+
   paymentProfile: any[];
   billingProfile: any[];
 }
@@ -99,4 +109,3 @@ interface Client {
   id: number;
   name: string;
 }
-

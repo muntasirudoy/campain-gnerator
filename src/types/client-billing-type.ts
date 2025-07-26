@@ -7,33 +7,31 @@ export type BillingPayload = {
 };
 
 export type BillingProfile = {
-  id: number;
+  id?: number;
   payment_setting_id: number;
   contact_name: string;
   phone: string;
   email: [""];
-  client_id: 1;
+  client_id?: 1;
 };
-export type PaymentSettings ={
-  
-    id: number;
-    client_id: number;
-    payment_method_id: number;
-    payment_method_name: string | null;
-    billing_country: number;
-    billing_country_name: string;
-    time_zone: string;
-    time_zone_name: string;
-    currency: number;
-    currency_name: string;
-    offer_code: string | null;
-    created_at: string;
-    updated_at: string;
-  
-}
+export type PaymentSettings = {
+  id?: number;
+  client_id?: number;
+  payment_method_id: number;
+  payment_method_name: string | null;
+  billing_country: number;
+  billing_country_name: string;
+  time_zone: string;
+  time_zone_name: string;
+  currency: number;
+  currency_name: string;
+  offer_code: string | null;
+  created_at: string;
+  updated_at: string;
+};
 export interface PaymentProfile {
-  id: number;
-  client_id: number;
+  id?: number;
+  client_id?: number;
   legal_name: string;
   street_address: string;
   detail_address: string;
@@ -42,8 +40,8 @@ export interface PaymentProfile {
   postal_code: string | number;
   image: string;
   payment_setting_id: number;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export type ClientBillingDetails = {

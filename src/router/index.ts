@@ -10,19 +10,6 @@ const routes: RouteRecordRaw[] = [
   },
   ...clientRoutes,
   ...authRoutes,
-  // {
-  //   path: "/create-campaign",
-  //   component: () =>
-  //     import("../views/dashboard/modules/client/onbording/Onbording.vue"),
-  //     name: "CreateCampaignPublic",
-  // },
-    {
-    path: "/create-campaign",
-     meta: { requiresAuth: true },
-    component: () =>
-      import("../views/public/campaign.create/CampaignCreate.vue"),
-      name: "CreateCampaignPublic",
-  },
   {
     path: "/:pathMatch(.*)*",
     name: "NotFound",

@@ -9,15 +9,13 @@ const clientRoutes: RouteRecordRaw[] = [
     children: [
       {
         path: "",
-        redirect: { name: "ClientOverview" }, // 👈 redirect to overview
+        redirect: { name: "ClientOverview" },
       },
       {
         path: "overview",
         name: "ClientOverview",
         component: () =>
-          import(
-            "../../views/dashboard/modules/client/overview/Overview.vue"
-          ),
+          import("../../views/dashboard/modules/client/overview/Overview.vue"),
       },
       {
         path: "campaigns",
@@ -35,6 +33,7 @@ const clientRoutes: RouteRecordRaw[] = [
             "../../views/dashboard/modules/client/campaigns/campaign.create/CampaignCreate.vue"
           ),
       },
+
       {
         path: "campaigns/:id",
         name: "CampaignDetails",
@@ -120,11 +119,16 @@ const clientRoutes: RouteRecordRaw[] = [
         path: "settings",
         name: "Settings",
         component: () =>
-          import(
-            "../../views/dashboard/modules/client/settings/settings.vue"
-          ),
+          import("../../views/dashboard/modules/client/settings/settings.vue"),
       },
     ],
+  },
+  {
+    path: "/create-campaign",
+    component: () =>
+      import("../../views/public/campaign.create/CampaignCreate.vue"),
+    name: "CreateCampaignPublic",
+    meta: { requiresAuth: true },
   },
 ];
 

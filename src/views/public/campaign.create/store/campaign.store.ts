@@ -1,8 +1,7 @@
-import { Ad } from '@/types/ad-types';
-import { PaymentSettings } from '@/types/client-billing-type';
-import { defineStore, StoreDefinition } from 'pinia';
+import { BillingProfile, PaymentProfile } from "@/types/client-billing-type";
+import { defineStore } from "pinia";
 
-// ✅ State Interfaces
+// ✅ Interfaces
 interface BusinessInfo {
   businessName: string;
 }
@@ -22,60 +21,84 @@ interface GoalCampaign {
   id?: number | null;
 }
 
+interface Audience {
+  gender: string;
+  age_group: number;
+}
+
+interface AdSettings {
+  name: string;
+  audiences: Audience[];
+  video_url: string;
+}
+
+interface PaymentSettings {
+  billing_country: number | "";
+  currency: number | "";
+  time_zone: string;
+}
+
+// ✅ New Interface for Billing Info
+interface BillingInfo {
+  full_name: string;
+  address: string;
+  city: string;
+  postal_code: string;
+  phone: string;
+}
+type PaymentProfileMerged = PaymentProfile & BillingProfile;
 
 export interface OnboardingState {
   businessInfo: BusinessInfo;
   goalCampaign: GoalCampaign;
-  adSettings: Pick<Ad,'audiences' |  'name' | 'video_url' >; 
-  paymentSettings: Pick<PaymentSettings,'billing_country'|'time_zone'|'currency'>;
+  adSettings: AdSettings;
+  paymentSettings: PaymentSettings;
+  paymentProfile: PaymentProfileMerged;
+  snapshots: Record<string, any>;
 }
 
-// ✅ Actions Interface
-interface OnboardingActions {
-  updateSection<T extends keyof OnboardingState>(
-    section: T,
-    data: Partial<OnboardingState[T]>
-  ): void;
-
-  persistData(): void;
-  loadData(): void;
-  resetStore(): void;
-  getAll(): Record<string, any>;
-}
-
-// ✅ Define the store with full typing
-export const useOnboardingStore: StoreDefinition<
-  'onboarding',
-  OnboardingState,
-  {},
-  OnboardingActions
-> = defineStore('onboarding', {
+// ✅ Store
+export const useOnboardingStore = defineStore("onboarding", {
   state: (): OnboardingState => ({
-    businessInfo: { businessName: '' },
+    businessInfo: { businessName: "" },
     goalCampaign: {
       goal_id: 1,
-      name: '',
+      name: "",
       budget_type: 1,
-      budget: '',
-      start_time: '',
-      end_time: '',
+      budget: "",
+      start_time: "",
+      end_time: "",
       location: 1,
-      out_url: 'https://example.com',
-      type: 'Video ads',
+      out_url: "",
+      type: "Video ads",
       format_ads: 1,
       bid_strategy: 1,
       id: null,
     },
     adSettings: {
-      name: '',
-      audiences: [{ gender: '', age_group: 1 }],
-      video_url: '',
-
+      name: "",
+      audiences: [{ gender: "", age_group: 1 }],
+      video_url: "",
     },
-    paymentSettings: { 
-      billing_country: 1,
-      currency: 1,
-      time_zone:'Asia/Dhaka'     },
+    paymentSettings: {
+      billing_country: "",
+      currency: "",
+      time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    },
+    paymentProfile: {
+      legal_name: "",
+      street_address: "",
+      detail_address: "",
+      city_district: "",
+      postal_code: "",
+      province: 0,
+      image: "",
+      payment_setting_id: 1,
+      contact_name: "",
+      phone: "",
+      email: [""],
+    },
+    snapshots: {},
   }),
 
   actions: {
@@ -83,37 +106,27 @@ export const useOnboardingStore: StoreDefinition<
       section: T,
       data: Partial<OnboardingState[T]>
     ) {
-      if (!this[section]) return;
       Object.assign(this[section], data);
-    },
-
-    getAll() {
-      return {
-        ...this.businessInfo,
-        ...this.goalCampaign,
-        ...this.adSettings,
-        ...this.paymentSettings,
-      };
     },
 
     resetStore() {
       this.$reset();
     },
 
-    persistData() {
-      localStorage.setItem('onboardingData', JSON.stringify(this.$state));
+    setAll(data: OnboardingState) {
+      this.$state = data;
     },
 
-    loadData() {
-      const savedData = localStorage.getItem('onboardingData');
-      if (savedData) {
-        this.$patch(JSON.parse(savedData));
-      }
+    saveSnapshot(section: keyof OnboardingState) {
+      this.snapshots[section as string] = JSON.parse(
+        JSON.stringify(this[section])
+      );
     },
-  },
 
-  persist: {
-    enabled: true,
-    strategies: [{ storage: localStorage }],
+    hasChanged(section: keyof OnboardingState) {
+      const current = JSON.stringify(this[section]);
+      const last = JSON.stringify(this.snapshots[section as string] || {});
+      return current !== last;
+    },
   },
 });

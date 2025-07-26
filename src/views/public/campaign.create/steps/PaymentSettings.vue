@@ -3,67 +3,36 @@
     <h3 class="text-lg font-semibold">Billing Details</h3>
 
     <!-- Billing Country -->
-    <FormField name="billing_country" v-slot="{ componentField }">
-      <FormItem>
-        <FormLabel>Billing Country</FormLabel>
-        <FormControl>
-          <select
-            v-bind="componentField"
-            class="w-full px-3 py-3 border border-gray-300 rounded-md"
-          >
-            <option disabled value="">Select Country</option>
-            <option :value="1">Bangladesh</option>
-            <option :value="1">Bangladesh</option>
-          </select>
-        </FormControl>
-        <FormMessage />
-      </FormItem>
-    </FormField>
+    <div>
+      <label class="block mb-2 font-medium text-sm">Billing Country</label>
+      <select v-model="store.paymentSettings.billing_country" class="w-full border rounded px-3 py-2">
+        <option value="">Select Country</option>
+        <option value="1">Bangladesh</option>
+      </select>
+    </div>
 
     <!-- Timezone -->
-    <FormField name="time_zone" v-slot="{ componentField }">
-      <FormItem>
-        <FormLabel>Timezone</FormLabel>
-        <FormControl>
-          <select
-            v-bind="componentField"
-            class="w-full px-3 py-3 border border-gray-300 rounded-md"
-          >
-            <option disabled value="">Select Timezone</option>
-            <option value="Asia/Dhaka">Asia/Dhaka</option>
-            <option value="Asia/Dhaka">Asia/Dhaka</option>
-          </select>
-        </FormControl>
-        <FormMessage />
-      </FormItem>
-    </FormField>
+    <div>
+      <label class="block mb-2 font-medium text-sm">Timezone</label>
+      <select v-model="store.paymentSettings.time_zone" class="w-full border rounded px-3 py-2">
+        <option value="Asia/Dhaka">Asia/Dhaka</option>
+      </select>
+    </div>
 
     <!-- Currency -->
-    <FormField name="currency" v-slot="{ componentField }">
-      <FormItem>
-        <FormLabel>Currency</FormLabel>
-        <FormControl>
-          <select
-            v-bind="componentField"
-            class="w-full px-3 py-3 border border-gray-300 rounded-md"
-          >
-            <option disabled value="">Select Currency</option>
-            <option :value="1">BDT (Bangladeshi Taka)</option>
-            <option :value="1">BDT (Bangladeshi Taka)</option>
-          </select>
-        </FormControl>
-        <FormMessage />
-      </FormItem>
-    </FormField>
+    <div>
+      <label class="block mb-2 font-medium text-sm">Currency</label>
+      <select v-model="store.paymentSettings.currency" class="w-full border rounded px-3 py-2">
+        <option value="">Select Currency</option>
+        <option value="1">BDT (Bangladeshi Taka)</option>
+      </select>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form";
+import { useOnboardingStore } from '../store/campaign.store';
+
+
+const store = useOnboardingStore();
 </script>
