@@ -1,9 +1,10 @@
 <template>
   <Form
-    v-slot="{ meta, values, validate, setFieldValue, setValues }"
+    v-slot="{ meta, values, validate, setFieldValue, setValues, setErrors }"
     :validation-schema="toTypedSchema(schemas[stepIndex - 1])"
     :initial-values="getInitialValuesForStep(stepIndex)"
     :key="stepIndex"
+    :validate-on-input="true"
     class="h-screen overflow-hidden bg-[#E0DCD680]"
   >
     <Stepper
@@ -112,6 +113,7 @@ import { AdConstant } from "@/constant/ads";
 import GoalCampaign from "./steps/GoalCampaign.vue";
 import AdSettings from "./steps/AdSettings.vue";
 import { adService } from "@/services/common/ads-service";
+import { parseBackendError } from "@/lib/utils";
 const { showToast } = useToast();
 const formData = reactive({
   businessName: "",
@@ -288,7 +290,11 @@ watch(stepIndex, (newStep) => {
   router.replace({ query: { ...route.query, step: newStep.toString() } });
 });
 
-const saveStepData = async (step: number, data: any) => {
+const saveStepData = async (
+  step: number,
+  data: any,
+  setErrorsFn: (errors: Record<string, string[]>) => void
+) => {
   Object.keys(data).forEach((key) => {
     if (formData.hasOwnProperty(key)) {
       (formData as any)[key] = data[key];
@@ -298,36 +304,42 @@ const saveStepData = async (step: number, data: any) => {
 
   completedSteps.value.add(step);
 
-  if (step === 1) {
-    let res = await campaignService.submitAboutBusiness({
-      name: data.businessName,
-    });
-    if (res.success) {
-      stepIndex.value++;
-      showToast(res.message, "", "success");
+  try {
+    if (step === 1) {
+      const res = await campaignService.submitAboutBusiness({
+        name: data.businessName,
+      });
+      if (res.success) {
+        stepIndex.value++;
+        showToast(res.message, "", "success");
+      }
     }
-  }
-  if (step === 2) {
-    let res = await campaignService.create({
-      ...data,
-      start_time: formatDateToYMDHIS(data.start_time),
-      end_time: formatDateToYMDHIS(data.end_time),
-    });
-    if (res.success) {
-      stepIndex.value++;
-      showToast(res.message, "", "success");
+    if (step === 2) {
+      const res = await campaignService.create({
+        ...data,
+        start_time: formatDateToYMDHIS(data.start_time),
+        end_time: formatDateToYMDHIS(data.end_time),
+      });
+      if (res.success) {
+        stepIndex.value++;
+        showToast(res.message, "", "success");
+      }
     }
-  }
-  if (step === 3) {
-    let res = await adService.create({
-      ...data,
-      start_time: formatDateToYMDHIS(data.start_time),
-      end_time: formatDateToYMDHIS(data.end_time),
-    });
-    if (res.success) {
-      stepIndex.value++;
-      showToast(res.message, "", "success");
+    if (step === 3) {
+      const res = await adService.create({
+        ...data,
+        start_time: formatDateToYMDHIS(data.start_time),
+        end_time: formatDateToYMDHIS(data.end_time),
+      });
+      if (res.success) {
+        stepIndex.value++;
+        showToast(res.message, "", "success");
+      }
     }
+  } catch (err: any) {
+    const parsed = parseBackendError(err);
+    setErrorsFn(parsed.errors);
+    showToast(parsed.message, "", "error");
   }
 };
 
@@ -335,7 +347,8 @@ const handleNextClick = async (
   validateFn: () => Promise<{ valid: boolean }>,
   currentValues: any,
   nextStepFn: () => void,
-  setValuesFn: (values: Record<string, any>) => void
+  setValuesFn: (values: Record<string, any>) => void,
+  setErrors: (errors: Record<string, string[]>) => void
 ) => {
   const { valid } = await validateFn();
   const step = nextStepFn();
@@ -343,7 +356,7 @@ const handleNextClick = async (
   nextStepFn();
   if (!valid) return;
 
-  await saveStepData(stepIndex.value, currentValues);
+  await saveStepData(stepIndex.value, currentValues, setErrors);
 };
 
 const handlePrevClick = (currentValues: any, prevStepFn: Function) => {
