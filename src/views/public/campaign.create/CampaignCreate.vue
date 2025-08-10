@@ -1,49 +1,3 @@
-<template>
-  <CampaignHeader />
-  <div class="flex w-full h-[calc(100vh-70px)] ">
-    <!-- ✅ Sidebar -->
-    <div class="max-w-[280px]  sticky top-0 bg-[#E0DCD6] p-6 border-r">
-      <div v-for="(step, index) in steps" :key="index" class="relative flex items-start gap-3 pb-6">
-        <div v-if="index < steps.length - 1" class="absolute left-4 top-6 w-0.5 h-12 bg-primary"
-          :class="{ 'bg-secondary': currentStep > index + 1 }"></div>
-        <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm" :class="{
-            'bg-secondary text-white': currentStep >= index + 1,
-            'bg-gray-200 text-black': currentStep < index + 1
-          }">
-            {{ currentStep > index + 1 ? '✓' : index + 1 }}
-          </div>
-          <span :class="currentStep === index + 1 ? 'text-primary font-bold' : 'text-gray-600'">
-            {{ step.title }}
-          </span>
-        </div>
-      </div>
-    </div>
-
-    <!-- ✅ Main Content -->
-    <div class="flex-1 p-6 bg-[#eeeeee] overflow-y-auto">
-      <div class="mx-auto max-w-[700px]">
-        <div v-if="!formReady" class="text-center py-10">Loading...</div>
-
-        <component v-else :is="steps[currentStep - 1].component" />
-
-        <div class="mt-6 flex justify-between">
-          <Button type="button" variant="outline" @click="prevStep" :disabled="currentStep === 1 || isLoading">
-            Back
-          </Button>
-          <Button type="button" class="btn" :disabled="isLoading" @click="nextStep">
-            <Loader v-if="isLoading" class="animate-spin" />
-            {{ currentStep === steps.length ? 'Finish' : 'Next' }}
-          </Button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-
-
-</template>
-
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { Button } from '@/components/ui/button';
@@ -56,17 +10,15 @@ import BusinessInfo from './steps/BusinessInfo.vue';
 import GoalCampaign from './steps/GoalCampaign.vue';
 import AdSettings from './steps/AdSettings.vue';
 import PaymentSettings from './steps/PaymentSettings.vue';
+import BillingInfo from './steps/BillingInfo.vue';
 
 // ✅ Services
 import { campaignService } from '@/services/common/campain-service';
-
-import { useOnboardingStore } from './store/campaign.store';
-import BillingInfo from './steps/BillingInfo.vue';
-
-import NoSidebarLayout from '@/layouts/client/NoSidebarLayout.vue';
-import CampaignHeader from './CampaignHeader.vue';
 import { clientBillingService } from '@/services/client/client-billing-service';
 import { adService } from '@/services/common/ads-service';
+
+import { useOnboardingStore } from './store/campaign.store';
+import CampaignHeader from './CampaignHeader.vue';
 
 const store = useOnboardingStore();
 const router = useRouter();
@@ -74,6 +26,9 @@ const router = useRouter();
 const currentStep = ref(1);
 const isLoading = ref(false);
 const formReady = ref(false);
+
+// ✅ Errors object for all steps
+const errors = ref<Record<string, string>>({});
 
 const steps = [
   { title: 'About your business', component: BusinessInfo, section: 'businessInfo' },
@@ -88,34 +43,34 @@ const schemas = {
   businessInfo: yup.object({ businessName: yup.string().required('Business name is required') }),
   goalCampaign: yup.object({
     goal_id: yup.number().required(),
-    name: yup.string().required(),
+    name: yup.string().required('Campaign name required'),
     budget_type: yup.number().required(),
-    budget: yup.string().required(),
-    start_time: yup.string().required(),
-    end_time: yup.string().required()
+    budget: yup.string().required('Budget required'),
+    start_time: yup.string().required('Start date required'),
+    end_time: yup.string().required('End date required')
   }),
   adSettings: yup.object({
-    name: yup.string().required(),
-    audiences: yup.array().of(yup.object({ gender: yup.string().required(), age_group: yup.number().required() }))
+    name: yup.string().required('Ad name required'),
+    audiences: yup.array().of(
+      yup.object({ gender: yup.string().required(), age_group: yup.number().required() })
+    )
   }),
   paymentSettings: yup.object({
-    billing_country: yup.number().required(),
-    currency: yup.number().required(),
+    billing_country: yup.number().required('Country required'),
+    currency: yup.number().required('Currency required'),
     time_zone: yup.string().required()
   }),
   paymentProfile: yup.object({
-
     legal_name: yup.string().required('Legal name required'),
     street_address: yup.string().required('Street address required'),
     detail_address: yup.string().optional(),
-    city_district: yup.number().required('City/District required'),
+    city_district: yup.number().required('City required'),
     province: yup.number().required('Province required'),
     postal_code: yup.string().required('Postal code required'),
     contact_name: yup.string().required('Contact name required'),
     phone: yup.string().required('Contact phone required'),
     email: yup.array().of(yup.string().email('Invalid email')).min(1, 'At least one email is required')
   })
-
 };
 
 // ✅ Initial Data Load
@@ -124,7 +79,6 @@ onMounted(async () => {
   try {
     const { data } = await campaignService.getInitialData();
 
-    // ✅ Normalize & Load into Pinia
     store.updateSection('businessInfo', { businessName: data.client?.name || '' });
 
     if (data.campaign) {
@@ -165,10 +119,7 @@ onMounted(async () => {
       });
     }
 
-
-    // ✅ Save snapshots for change detection
     steps.forEach(step => store.saveSnapshot(step.section as any));
-
     currentStep.value = data.stepper_count + 1 || 1;
     router.replace({ query: { step: currentStep.value.toString() } });
   } catch (e) {
@@ -182,21 +133,17 @@ onMounted(async () => {
 async function nextStep() {
   const section = steps[currentStep.value - 1].section as keyof typeof schemas;
   const validator = schemas[section];
-  console.log(`Validating section: ${section}`, store[section]);
+
+  errors.value = {}; // clear old errors
 
   try {
     isLoading.value = true;
 
-    // Validate current section
-    let valid = await validator.validate(store[section], { abortEarly: false });
-    console.log(valid);
+    // ✅ Validate with Yup
+    await validator.validate(store[section], { abortEarly: false });
 
-    // ✅ API hit only if changed
-    console.log(store.hasChanged(section));
-
+    // ✅ API call only if data changed
     if (store.hasChanged(section)) {
-      console.log(section);
-
       await saveStepData(section);
       store.saveSnapshot(section);
     }
@@ -208,15 +155,34 @@ async function nextStep() {
       alert('🎉 Onboarding Completed!');
     }
   } catch (err: any) {
-    console.error('Validation failed', err);
-    if (err.inner) {
-      alert('Please fix the errors before proceeding.');
+    if (err.name === 'ValidationError') {
+      err.inner.forEach((e: any) => {
+        if (e.path) {
+          errors.value[`${section}.${e.path}`] = e.message;
+        }
+      });
+    } else if (err.response?.data?.errors) {
+      // ✅ Map server errors
+      Object.entries(err.response.data.errors).forEach(([key, val]: any) => {
+        errors.value[`${section}.${key}`] = val[0];
+      });
     }
   } finally {
     isLoading.value = false;
   }
 }
+async function validateField(path: string, value: any) {
+  // path = "businessInfo.businessName"
+  const [section, field] = path.split('.');
 
+  try {
+    // Validate only this field using its schema
+    await schemas[section as keyof typeof schemas].validateAt(field, { [field]: value });
+    delete errors.value[path]; // Remove error if valid
+  } catch (err: any) {
+    errors.value[path] = err.message; // Set error if invalid
+  }
+}
 // ✅ Save Data Per Step
 async function saveStepData(section: string) {
   switch (section) {
@@ -239,12 +205,7 @@ async function saveStepData(section: string) {
       break;
 
     case 'paymentSettings':
-      // if (!store.paymentSettings.id) {
-      //   const { data } = await clientBillingService.createBilling(store.paymentSettings);
-      //   store.updateSection('paymentSettings', { id: data.id });
-      // } else {
-      // await clientBillingService(store.paymentSettings.id!, store.paymentSettings);
-      // }
+      await clientBillingService.createBilling(store.paymentSettings);
       break;
 
     case 'paymentProfile':
@@ -252,15 +213,14 @@ async function saveStepData(section: string) {
       formData.append('legal_name', store.paymentProfile.legal_name || '');
       formData.append('street_address', store.paymentProfile.street_address || '');
       formData.append('detail_address', store.paymentProfile.detail_address || '');
-      formData.append('city_district', store.paymentProfile.city_district || '');
+      formData.append('city_district', String(store.paymentProfile.city_district || ''));
       formData.append('province', String(store.paymentProfile.province || ''));
-      formData.append('postal_code', String(store.paymentProfile.postal_code) || '');
+      formData.append('postal_code', String(store.paymentProfile.postal_code || ''));
       formData.append('contact_name', store.paymentProfile.contact_name || '');
       formData.append('phone', store.paymentProfile.phone || '');
       store.paymentProfile.email.forEach(email => {
         formData.append('email[]', email);
       });
-
 
       if (store.paymentProfile.image) {
         formData.append('image', store.paymentProfile.image);
@@ -269,13 +229,10 @@ async function saveStepData(section: string) {
       if (!store.paymentProfile.id) {
         const { data } = await clientBillingService.createPaymentProfile(formData);
         store.updateSection('paymentProfile', { id: data.id });
-      } else {
-        // await clientBillingService.updatePaymentProfile( store.paymentProfile);
       }
       break;
   }
 }
-
 
 function prevStep() {
   if (currentStep.value > 1) {
@@ -284,3 +241,43 @@ function prevStep() {
   }
 }
 </script>
+
+<template>
+  <CampaignHeader />
+  <div class="flex w-full h-[calc(100vh-70px)]">
+    <!-- Sidebar -->
+    <div class="max-w-[280px] sticky top-0 bg-[#E0DCD6] p-6 border-r">
+      <div v-for="(step, index) in steps" :key="index" class="relative flex items-start gap-3 pb-6">
+        <div v-if="index < steps.length - 1" class="absolute left-4 top-6 w-0.5 h-12 bg-primary"
+          :class="{ 'bg-secondary': currentStep > index + 1 }"></div>
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm"
+            :class="{ 'bg-secondary text-white': currentStep >= index + 1, 'bg-gray-200 text-black': currentStep < index + 1 }">
+            {{ currentStep > index + 1 ? '✓' : index + 1 }}
+          </div>
+          <span :class="currentStep === index + 1 ? 'text-primary font-bold' : 'text-gray-600'">
+            {{ step.title }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main -->
+    <div class="flex-1 p-6 bg-[#eeeeee] overflow-y-auto">
+      <div class="mx-auto max-w-[700px]">
+        <div v-if="!formReady" class="text-center py-10">Loading...</div>
+
+        <component v-else :is="steps[currentStep - 1].component" :errors="errors" :validateField="validateField" />
+
+        <div class="mt-6 flex justify-between">
+          <Button type="button" variant="outline" @click="prevStep"
+            :disabled="currentStep === 1 || isLoading">Back</Button>
+          <Button type="button" class="btn" :disabled="isLoading" @click="nextStep">
+            <Loader v-if="isLoading" class="animate-spin" />
+            {{ currentStep === steps.length ? 'Finish' : 'Next' }}
+          </Button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
